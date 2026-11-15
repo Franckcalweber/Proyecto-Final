@@ -106,4 +106,3 @@ def obtener_datos_pais(codigo):
     except (requests.exceptions.RequestException,
             ValueError, KeyError, TypeError, AttributeError):
         return None
-
