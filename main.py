@@ -1,113 +1,22 @@
 
 """
 Proyecto Final CS1400 - Información del Viajero
-Idiomas: Español y Português
+Paso 7: Programación Orientada a Objetos (POO)
 
-Integrantes: Franck Calderon y Marcos Araujo
-Fecha: 
-
-Programa para consultar información de ciudades
-y planificar viajes usando APIs públicas.
+Idiomas: Español y Portugués
 """
 
+from ciudad import Ciudad
+from utils import calcular_distancia
+from api import obtener_coordenadas, obtener_clima, obtener_datos_pais
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from api import (
-    obtener_coordenadas,
-    obtener_clima,
-    obtener_datos_pais
-)
-
-
-# Traducciones de todos los mensajes principales.
-MENSAJES = {
-    "es": {
-        "bienvenida": "¡Bienvenido a Información del Viajero!",
-        "menu": (
-            "1. Calcular distancia / Planear viaje\n"
-            "2. Información de ciudad\n"
-            "3. Salir"
-        ),
-        "opcion": "Elige una opción: ",
-        "invalida": "Opción inválida. Intenta otra vez.",
-        "vacio": "El campo no puede estar vacío.",
-        "origen": "Ciudad de origen: ",
-        "destino": "Ciudad de destino: ",
-        "ciudad": "Nombre de la ciudad: ",
-        "unidad": "Unidad (km/millas): ",
-        "unidad_error": "Escribe km o millas.",
-        "transporte": "Transporte (avion/carro/pie): ",
-        "transporte_error": "Elige avion, carro o pie.",
-        "resumen": "--- Resumen ---",
-        "consultando": "Consultando datos...",
-        "no_encontrada": "Ciudad no encontrada o error de conexión.",
-        "confirmar": "¿Es la ciudad correcta? (s/n): ",
-        "coordenadas": "--- Coordenadas ---",
-        "info": "--- Información de la ciudad ---",
-        "temperatura": "Temperatura actual",
-        "hora": "Hora local",
-        "capital": "Capital",
-        "moneda": "Moneda",
-        "pais": "País",
-        "nota": "La distancia y el tiempo se calcularán después.",
-        "despedida": "¡Gracias por usar el programa!",
-        "no_disponible": "No disponible",
-        "unidad_larga_km": "kilómetros",
-        "unidad_larga_millas": "millas",
-        "transporte_label": "Transporte",
-        "origen_label": "Origen",
-        "destino_label": "Destino",
-        "unidad_label": "Unidad",
-        "reintentar": "Prueba con otra ciudad."
-    },
-
-    "pt": {
-        "bienvenida": "Bem-vindo ao Informações do Viajante!",
-        "menu": (
-            "1. Calcular distância / Planejar viagem\n"
-            "2. Informações da cidade\n"
-            "3. Sair"
-        ),
-        "opcion": "Escolha uma opção: ",
-        "invalida": "Opção inválida. Tente novamente.",
-        "vacio": "O campo não pode ficar vazio.",
-        "origen": "Cidade de origem: ",
-        "destino": "Cidade de destino: ",
-        "ciudad": "Nome da cidade: ",
-        "unidad": "Unidade (km/milhas): ",
-        "unidad_error": "Digite km ou milhas.",
-        "transporte": "Transporte (aviao/carro/pe): ",
-        "transporte_error": "Escolha aviao, carro ou pe.",
-        "resumen": "--- Resumo ---",
-        "consultando": "Consultando dados...",
-        "no_encontrada": "Cidade não encontrada ou erro de conexão.",
-        "confirmar": "Esta é a cidade correta? (s/n): ",
-        "coordenadas": "--- Coordenadas ---",
-        "info": "--- Informações da cidade ---",
-        "temperatura": "Temperatura atual",
-        "hora": "Hora local",
-        "capital": "Capital",
-        "moneda": "Moeda",
-        "pais": "País",
-        "nota": "A distância e o tempo serão calculados depois.",
-        "despedida": "Obrigado por usar o programa!",
-        "no_disponible": "Indisponível",
-        "unidad_larga_km": "quilômetros",
-        "unidad_larga_millas": "milhas",
-        "transporte_label": "Transporte",
-        "origen_label": "Origem",
-        "destino_label": "Destino",
-        "unidad_label": "Unidade",
-        "reintentar": "Tente outra cidade."
-    }
-}
-
 
 def seleccionar_idioma():
-    """Permite seleccionar español o portugués."""
+    """Permite elegir el idioma del programa."""
     while True:
-        print("\n=== Idioma / Língua ===")
+        print("\n=== IDIOMA / LÍNGUA ===")
         print("1. Español")
         print("2. Português")
 
@@ -121,219 +30,283 @@ def seleccionar_idioma():
             print("Opción inválida / Opção inválida.")
 
 
-def pedir_texto(mensaje, textos):
-    """Pide texto y evita entradas vacías."""
+def pedir_texto(mensaje):
+    """Valida que el usuario no deje campos vacíos."""
     while True:
-        valor = input(mensaje).strip()
+        texto = input(mensaje).strip()
 
-        if valor:
-            return valor
+        if texto:
+            return texto
 
-        print(textos["vacio"])
+        print("No puede estar vacío / Não pode ficar vazio.")
 
 
-def pedir_unidad(textos):
-    """Valida la unidad de distancia."""
+def buscar_ciudad(idioma, mensaje):
+    """Consulta la API y convierte los datos en un objeto Ciudad."""
     while True:
-        unidad = input(textos["unidad"]).strip().lower()
+        nombre = pedir_texto(mensaje)
+
+        datos = obtener_coordenadas(nombre, idioma)
+
+        if datos is None:
+            print("Ciudad no encontrada / Cidade não encontrada.")
+            continue
+
+        ciudad = Ciudad(
+            datos["nombre"],
+            datos["pais"],
+            datos["lat"],
+            datos["lon"]
+        )
+
+        print(f"\n{ciudad}")
+
+        confirmar = input(
+            "¿Es correcta? / Está correta? (s/n): "
+        ).strip().lower()
+
+        if confirmar in ("s", "si", "sí", "sim"):
+            return ciudad, datos
+
+        print("Intenta nuevamente / Tente novamente.")
+
+
+def pedir_unidad(idioma):
+    """Permite seleccionar kilómetros o millas."""
+    while True:
+        if idioma == "es":
+            unidad = input(
+                "Unidad de distancia (km/millas): "
+            ).strip().lower()
+        else:
+            unidad = input(
+                "Unidade de distância (km/milhas): "
+            ).strip().lower()
 
         if unidad == "km":
             return "km"
 
-        elif unidad in ("millas", "milhas"):
+        if unidad in ("millas", "milhas"):
             return "millas"
 
-        print(textos["unidad_error"])
+        print("Unidad inválida / Unidade inválida.")
 
 
-def pedir_transporte(textos):
-    """Permite elegir un medio de transporte."""
+def pedir_transporte(idioma):
+    """Solicita y valida el medio de transporte."""
     while True:
-        transporte = input(textos["transporte"]).strip().lower()
+        if idioma == "es":
+            print("\n1. Avión")
+            print("2. Carro")
+            print("3. A pie")
+        else:
+            print("\n1. Avião")
+            print("2. Carro")
+            print("3. A pé")
 
-        if transporte in (
-            "avion", "avião", "carro",
-            "pie", "pe", "a pe", "a pé"
-        ):
-            return transporte
+        opcion = input(
+            "Transporte (1/2/3): "
+        ).strip()
 
-        print(textos["transporte_error"])
+        if opcion in ("1", "2", "3"):
+            return opcion
 
-
-def buscar_ciudad(textos, idioma, pregunta):
-    """Busca una ciudad y permite corregir el nombre."""
-    while True:
-        nombre = pedir_texto(pregunta, textos)
-
-        lugar = obtener_coordenadas(nombre, idioma)
-
-        if lugar is None:
-            print(textos["no_encontrada"])
-            continue
-
-        print(f'{lugar["nombre"]}, {lugar["pais"]}')
-
-        while True:
-            confirmar = input(textos["confirmar"]).strip().lower()
-
-            if confirmar in ("s", "sim", "si", "sí"):
-                return lugar
-
-            elif confirmar in ("n", "nao", "não", "no"):
-                print(textos["reintentar"])
-                break
-
-            else:
-                print(textos["invalida"])
+        print("Opción inválida / Opção inválida.")
 
 
-def hora_local(zona):
-    """Obtiene la hora local según la zona horaria."""
-    try:
-        return datetime.now(
-            ZoneInfo(zona)
-        ).strftime("%H:%M")
+def mostrar_informacion(ciudad, datos, idioma):
+    """Muestra clima, hora local, capital y moneda."""
+    print("\n================================")
 
-    except (ZoneInfoNotFoundError, ValueError,
-            TypeError, KeyError):
-        return None
+    if idioma == "es":
+        print("INFORMACIÓN DE LA CIUDAD")
+    else:
+        print("INFORMAÇÕES DA CIDADE")
 
-
-def mostrar_coordenadas(lugar):
-    """Imprime las coordenadas de una ciudad."""
-    print(
-        f'{lugar["nombre"]}, {lugar["pais"]} '
-        f'-> lat {lugar["lat"]:.4f}, '
-        f'lon {lugar["lon"]:.4f}'
-    )
-
-
-def mostrar_informacion(lugar, textos):
-    """Muestra clima, hora, capital y moneda."""
-    print("\n" + textos["info"])
-
-    mostrar_coordenadas(lugar)
+    print("================================")
+    print(ciudad)
 
     temperatura = obtener_clima(
-        lugar["lat"],
-        lugar["lon"],
-        lugar["zona_horaria"]
-    )
-
-    hora = hora_local(lugar["zona_horaria"])
-
-    pais = obtener_datos_pais(lugar["codigo_pais"])
-
-    sin_datos = textos.get(
-        "no_disponible",
-        textos.get("no_disponible", "Indisponível")
+        ciudad.latitud,
+        ciudad.longitud,
+        datos.get("zona_horaria", "auto")
     )
 
     if temperatura is not None:
-        print(f'{textos["temperatura"]}: {temperatura} °C')
+        print(f"Temperatura: {temperatura} °C")
     else:
-        print(f'{textos["temperatura"]}: {sin_datos}')
+        print("Temperatura: No disponible / Indisponível")
 
-    print(f'{textos["hora"]}: {hora or sin_datos}')
+    zona = datos.get("zona_horaria")
+
+    try:
+        hora = datetime.now(
+            ZoneInfo(zona)
+        ).strftime("%H:%M")
+        print(f"Hora local: {hora}")
+    except (ZoneInfoNotFoundError, ValueError, TypeError):
+        print("Hora local: No disponible / Indisponível")
+
+    pais = obtener_datos_pais(datos.get("codigo_pais", ""))
 
     if pais:
         print(
-            f'{textos["capital"]}: '
-            f'{pais.get("capital") or sin_datos}'
+            f"Capital: {pais.get('capital') or 'No disponible'}"
+        )
+        print(
+            f"Moneda / Moeda: "
+            f"{pais.get('moneda') or 'No disponible'} "
+            f"{pais.get('simbolo', '')}"
+        )
+    else:
+        print("Datos del país no disponibles.")
+
+
+def planear_viaje(idioma):
+    """Crea objetos Ciudad y calcula distancia y tiempo de viaje."""
+    print("\n================================")
+
+    if idioma == "es":
+        print("PLANIFICAR VIAJE")
+        origen_texto = "Ciudad de origen: "
+        destino_texto = "Ciudad de destino: "
+    else:
+        print("PLANEJAR VIAGEM")
+        origen_texto = "Cidade de origem: "
+        destino_texto = "Cidade de destino: "
+
+    print("================================")
+
+    nombre_origen = pedir_texto(origen_texto)
+    nombre_destino = pedir_texto(destino_texto)
+
+    unidad = pedir_unidad(idioma)
+    transporte = pedir_transporte(idioma)
+
+    # Mostrar resumen antes de consultar la API.
+    print("\n========== RESUMEN / RESUMO ==========")
+    print(f"Origen / Origem: {nombre_origen}")
+    print(f"Destino: {nombre_destino}")
+    print(f"Unidad / Unidade: {unidad}")
+    print(f"Transporte: {transporte}")
+    print("======================================")
+
+    # Buscar coordenadas y crear objetos Ciudad.
+    datos_origen = obtener_coordenadas(nombre_origen, idioma)
+    datos_destino = obtener_coordenadas(nombre_destino, idioma)
+
+    if datos_origen is None:
+        print("\nOrigen no encontrado / Origem não encontrada.")
+        origen, datos_origen = buscar_ciudad(idioma, origen_texto)
+    else:
+        origen = Ciudad(
+            datos_origen["nombre"],
+            datos_origen["pais"],
+            datos_origen["lat"],
+            datos_origen["lon"]
         )
 
-        if pais.get("moneda"):
-            print(
-                f'{textos["moneda"]}: '
-                f'{pais["moneda"]} '
-                f'({pais.get("simbolo", "")})'
-            )
-        else:
-            print(f'{textos["moneda"]}: {sin_datos}')
-
+    if datos_destino is None:
+        print("\nDestino no encontrado / Destino não encontrado.")
+        destino, datos_destino = buscar_ciudad(idioma, destino_texto)
     else:
-        print(f'{textos["capital"]}: {sin_datos}')
-        print(f'{textos["moneda"]}: {sin_datos}')
+        destino = Ciudad(
+            datos_destino["nombre"],
+            datos_destino["pais"],
+            datos_destino["lat"],
+            datos_destino["lon"]
+        )
 
+    print("\n========== CIUDADES / CIDADES ==========")
+    print(f"Origen / Origem: {origen}")
+    print(f"Destino: {destino}")
 
-def planear_viaje(textos, idioma):
-    """Solicita los datos del viaje y consulta coordenadas."""
-    origen = pedir_texto(textos["origen"], textos)
-    destino = pedir_texto(textos["destino"], textos)
+    # Requisito principal del Paso 7:
+    # calcular distancia usando un método del objeto.
+    distancia_km = origen.distancia_a(destino)
 
-    unidad = pedir_unidad(textos)
-    transporte = pedir_transporte(textos)
+    # El utils.py de tu compañero devuelve cuatro valores.
+    # Reutilizamos esa función para obtener millas y tiempo.
+    coordenadas_origen = (origen.latitud, origen.longitud)
+    coordenadas_destino = (destino.latitud, destino.longitud)
 
-    # Resumen antes de consultar las APIs.
-    print("\n" + textos["resumen"])
-    print(f'{textos["origen_label"]}: {origen}')
-    print(f'{textos["destino_label"]}: {destino}')
+    _, distancia_millas, horas, minutos = calcular_distancia(
+        coordenadas_origen,
+        coordenadas_destino
+    )
+
+    print("\n========== RESULTADOS ==========")
 
     if unidad == "km":
-        nombre_unidad = textos["unidad_larga_km"]
+        print(f"Distancia: {distancia_km:.2f} km")
     else:
-        nombre_unidad = textos["unidad_larga_millas"]
+        print(f"Distancia: {distancia_millas:.2f} millas")
 
-    print(f'{textos["unidad_label"]}: {nombre_unidad}')
-    print(f'{textos["transporte_label"]}: {transporte}')
+    if transporte == "1":
+        if idioma == "es":
+            print(f"Tiempo estimado de vuelo: {horas} h {minutos} min")
+        else:
+            print(f"Tempo estimado de voo: {horas} h {minutos} min")
+    else:
+        if idioma == "es":
+            print(
+                "Tiempo de viaje por carretera o a pie "
+                "no disponible en esta versión."
+            )
+        else:
+            print(
+                "Tempo de viagem de carro ou a pé "
+                "indisponível nesta versão."
+            )
 
-    print("\n" + textos["consultando"])
-
-    # Consulta de origen y destino.
-    lugar_origen = obtener_coordenadas(origen, idioma)
-    lugar_destino = obtener_coordenadas(destino, idioma)
-
-    if lugar_origen is None:
-        print(textos["no_encontrada"])
-        lugar_origen = buscar_ciudad(
-            textos, idioma, textos["origen"]
-        )
-
-    if lugar_destino is None:
-        print(textos["no_encontrada"])
-        lugar_destino = buscar_ciudad(
-            textos, idioma, textos["destino"]
-        )
-
-    print("\n" + textos["coordenadas"])
-
-    print(textos["origen_label"] + ": ", end="")
-    mostrar_coordenadas(lugar_origen)
-
-    print(textos["destino_label"] + ": ", end="")
-    mostrar_coordenadas(lugar_destino)
-
-    print(textos["nota"])
+    print("================================")
 
 
 def main():
-    """Ejecuta el programa hasta que el usuario elija salir."""
+    """Menú principal del programa."""
     idioma = seleccionar_idioma()
-    textos = MENSAJES[idioma]
-
-    print("\n" + textos["bienvenida"])
 
     while True:
-        print("\n" + textos["menu"])
+        print("\n================================")
 
-        opcion = input(textos["opcion"]).strip()
+        if idioma == "es":
+            print("INFORMACIÓN DEL VIAJERO")
+            print("1. Planificar viaje")
+            print("2. Información de una ciudad")
+            print("3. Salir")
+        else:
+            print("INFORMAÇÕES DO VIAJANTE")
+            print("1. Planejar viagem")
+            print("2. Informações de uma cidade")
+            print("3. Sair")
+
+        print("================================")
+
+        opcion = input("Opción / Opção: ").strip()
 
         if opcion == "1":
-            planear_viaje(textos, idioma)
+            planear_viaje(idioma)
 
         elif opcion == "2":
-            lugar = buscar_ciudad(
-                textos, idioma, textos["ciudad"]
-            )
-            mostrar_informacion(lugar, textos)
+            if idioma == "es":
+                mensaje = "Nombre de la ciudad: "
+            else:
+                mensaje = "Nome da cidade: "
+
+            ciudad, datos = buscar_ciudad(idioma, mensaje)
+            mostrar_informacion(ciudad, datos, idioma)
 
         elif opcion == "3":
-            print(textos["despedida"])
+            if idioma == "es":
+                print("¡Gracias por usar el programa!")
+            else:
+                print("Obrigado por usar o programa!")
             break
 
         else:
-            print(textos["invalida"])
+            print("Opción inválida / Opção inválida.")
 
 
 if __name__ == "__main__":
     main()
+
