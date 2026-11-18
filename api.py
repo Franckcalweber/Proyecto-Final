@@ -107,6 +107,7 @@ def obtener_datos_pais(codigo):
             ValueError, KeyError, TypeError, AttributeError):
         return None
 
+
 def obtener_hora(zona_horaria):
     parametros = {"timeZone":zona_horaria}
     try:
@@ -120,3 +121,4 @@ def obtener_hora(zona_horaria):
     
 
     
+
