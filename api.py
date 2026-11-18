@@ -1,6 +1,6 @@
 """
 """
-
+ 
 """Consultas a APIs públicas para Información del Viajero."""
 
 import requests
@@ -8,7 +8,7 @@ import requests
 GEOCODING = "https://geocoding-api.open-meteo.com/v1/search"
 CLIMA = "https://api.open-meteo.com/v1/forecast"
 PAISES = "https://restcountries.com/v3.1/alpha/"
-
+HORA = "https://timeapi.io/api/v1/time/current/zone"
 
 def obtener_coordenadas(ciudad, idioma="es"):
     """Obtiene nombre, país, coordenadas y zona horaria."""
@@ -39,7 +39,7 @@ def obtener_coordenadas(ciudad, idioma="es"):
             "codigo_pais": lugar.get("country_code", ""),
             "lat": lugar["latitude"],
             "lon": lugar["longitude"],
-            "zona_horaria": lugar.get("timezone", "")
+            "zona_horaria": lugar.get("timezone", "")  
         }
 
     except requests.exceptions.Timeout:
@@ -107,3 +107,16 @@ def obtener_datos_pais(codigo):
             ValueError, KeyError, TypeError, AttributeError):
         return None
 
+def obtener_hora(zona_horaria):
+    parametros = {"timeZone":zona_horaria}
+    try:
+         respuesta = requests.get(HORA,params=parametros, timeout=10)
+         datos = respuesta.json()
+         return datos["time"][:5]
+    except requests.exceptions.RequestException as erro:
+        print(f"eror al consultar la hora:{erro}")
+        return None
+#print(obtener_hora("America/Sao_Paulo"))
+    
+
+    
