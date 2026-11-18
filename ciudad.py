@@ -13,4 +13,14 @@ class Ciudad:
         self.latitud = float(latitud)
         self.longitud = float(longitud)
 
+def distancia_a(self, otra):
+        """Devuelve la distancia en kilómetros hasta otra Ciudad."""
+        return calcular_distancia(
+            self.latitud, self.longitud, otra.latitud, otra.longitud
+        )
+
+def __str__(self):
+        """Devuelve una representación legible de la ciudad."""
+        return f"{self.nombre}, {self.pais} ({self.latitud:.4f}, {self.longitud:.4f})"
+
 
